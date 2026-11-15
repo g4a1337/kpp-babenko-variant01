@@ -67,10 +67,17 @@ $bootstrapMarker = Join-Path $RuntimeRoot 'database-ready.txt'
 if (-not (Test-Path -LiteralPath $bootstrapMarker)) {
     $secret = $Settings.databasePassword
     $env:MYSQL_PWD = $secret
+    $probeErrorActionPreference = $ErrorActionPreference
     try {
+        # Windows PowerShell 5.1 promotes native stderr to an error even when
+        # redirected. A rejected password is expected before the first ALTER USER.
+        $ErrorActionPreference = 'Continue'
         & "$MySqlHome\bin\mysql.exe" --host=127.0.0.1 "--port=$($Settings.mysqlPort)" --user=root --execute='SELECT 1' *> $null
         $rootConfigured = $LASTEXITCODE -eq 0
-    } finally { Remove-Item Env:MYSQL_PWD -ErrorAction SilentlyContinue }
+    } finally {
+        $ErrorActionPreference = $probeErrorActionPreference
+        Remove-Item Env:MYSQL_PWD -ErrorAction SilentlyContinue
+    }
     if (-not $rootConfigured) { Invoke-MySql "ALTER USER 'root'@'localhost' IDENTIFIED BY '$secret';" -WithoutPassword }
     Invoke-MySql (Get-Content -LiteralPath "$ProjectRoot\database.sql" -Raw -Encoding UTF8)
     Invoke-MySql "CREATE USER IF NOT EXISTS 'coursework'@'127.0.0.1' IDENTIFIED BY '$secret'; GRANT SELECT,INSERT,UPDATE,DELETE ON it_support.* TO 'coursework'@'127.0.0.1';"

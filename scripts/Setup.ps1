@@ -9,9 +9,9 @@ function Download-Zip($url,$name,$pattern,$hashUrl,$algorithm) {
     if (Get-ChildItem -LiteralPath $tools -Directory -Filter $pattern) { return }
     $zip = Join-Path $cache ($name+'.zip')
     Write-Host "Downloading $name..."
-    Invoke-WebRequest -Uri $url -OutFile $zip
+    Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $zip
     if ($hashUrl) {
-        $expected = ((Invoke-WebRequest -Uri $hashUrl).Content.Trim() -split '\s+')[0]
+        $expected = ((Invoke-WebRequest -UseBasicParsing -Uri $hashUrl).Content.Trim() -split '\s+')[0]
         if ((Get-FileHash -LiteralPath $zip -Algorithm $algorithm).Hash -ne $expected) { throw "$name checksum mismatch" }
     }
     Expand-Archive -LiteralPath $zip -DestinationPath $tools -Force
@@ -19,7 +19,7 @@ function Download-Zip($url,$name,$pattern,$hashUrl,$algorithm) {
 if (-not (Get-ChildItem -LiteralPath $tools -Directory -Filter 'jdk-21*')) {
     $jdk = (Invoke-RestMethod 'https://api.adoptium.net/v3/assets/latest/21/hotspot?architecture=x64&image_type=jdk&os=windows&vendor=eclipse')[0].binary.package
     $zip = Join-Path $cache 'jdk.zip'
-    Invoke-WebRequest -Uri $jdk.link -OutFile $zip
+    Invoke-WebRequest -UseBasicParsing -Uri $jdk.link -OutFile $zip
     if ((Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash -ne $jdk.checksum) { throw 'JDK checksum mismatch' }
     Expand-Archive -LiteralPath $zip -DestinationPath $tools -Force
 }
