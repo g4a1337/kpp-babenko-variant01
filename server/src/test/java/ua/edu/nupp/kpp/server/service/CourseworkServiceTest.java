@@ -44,6 +44,21 @@ class CourseworkServiceTest {
         assertEquals(25,PriorityCalculator.calculate(0,0,100));
     }
     @Test void priorityRoundsToTwoDecimalPlaces() { assertEquals(33.33,PriorityCalculator.calculate(33.333,33.333,33.333)); }
+    @Test void priorityRoundsHalfCentUpUsingDecimalWeights() {
+        assertEquals(0.15,PriorityCalculator.calculate(0,0,0.58));
+        assertEquals(0.04,PriorityCalculator.calculate(0,0.1,0));
+        assertEquals(0.06,PriorityCalculator.calculate(0,0.05,0.15));
+    }
+    @Test void scoreRoundsDecimalHalvesUp() {
+        assertEquals(1.01,Validation.score(1.005,"Фактор"));
+        assertEquals(10.08,Validation.score(10.075,"Фактор"));
+        assertEquals(0.15,Validation.score(0.145,"Фактор"));
+        assertEquals(100.00,Validation.score(99.995,"Фактор"));
+    }
+    @Test void priorityUsesNormalizedFactorsBeforeWeighting() {
+        assertEquals(1.01,PriorityCalculator.calculate(1.005,1.005,1.005));
+        assertEquals(0.01,PriorityCalculator.calculate(0.005,0.005,0));
+    }
     @Test void rejectsNegativeFactor() { assertThrows(ApiException.class,()->PriorityCalculator.calculate(-0.01,0,0)); }
     @Test void rejectsFactorAboveHundred() { assertThrows(ApiException.class,()->PriorityCalculator.calculate(0,100.01,0)); }
     @Test void rejectsNaNFactor() { assertThrows(ApiException.class,()->PriorityCalculator.calculate(0,0,Double.NaN)); }

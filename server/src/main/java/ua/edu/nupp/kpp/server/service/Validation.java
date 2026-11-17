@@ -1,5 +1,8 @@
 package ua.edu.nupp.kpp.server.service;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 public final class Validation {
     private Validation() {}
     public static String required(String value, String field, int max) {
@@ -20,6 +23,6 @@ public final class Validation {
     public static double score(double score, String field) {
         if (!Double.isFinite(score) || score < 0 || score > 100)
             throw ApiException.badRequest(field + ": значення має бути від 0 до 100");
-        return Math.round(score * 100.0) / 100.0;
+        return BigDecimal.valueOf(score).setScale(2, RoundingMode.HALF_UP).doubleValue();
     }
 }
